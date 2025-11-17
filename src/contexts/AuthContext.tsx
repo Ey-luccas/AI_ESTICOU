@@ -30,12 +30,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Ensure any legacy persisted sessions are cleared
-    localStorage.removeItem('lualabs_user');
-    localStorage.removeItem('lualabs_token');
-  }, []);
-
-  useEffect(() => {
     const verifySession = async () => {
       if (!token) return;
 
@@ -50,7 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (result?.success) {
           setUser(result.data.user);
-          localStorage.setItem('lualabs_user', JSON.stringify(result.data.user));
         } else {
           logout();
         }
@@ -92,8 +85,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('lualabs_user');
-    localStorage.removeItem('lualabs_token');
     navigate('/login', { replace: true });
   };
 
