@@ -157,8 +157,14 @@ export default function ManagerClients() {
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" className="flex-1">Cadastrar</Button>
-                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <Button type="submit" className="flex-1">
+                  Cadastrar
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
                   Cancelar
                 </Button>
               </div>
@@ -204,7 +210,10 @@ export default function ManagerClients() {
             <TableBody>
               {filteredClients.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-gray-500 py-8">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-gray-500 py-8"
+                  >
                     Nenhum cliente encontrado
                   </TableCell>
                 </TableRow>

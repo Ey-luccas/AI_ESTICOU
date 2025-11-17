@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -7,12 +8,32 @@ import { FolderKanban, Sparkles, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function ClientDashboard() {
-  const { arts, variations } = useData();
+  const { arts, variations, refreshArts, refreshVariations } = useData();
   const { user } = useAuth();
 
-  // Filter by client
-  const myArts = arts.filter((art) => art.clientId === user?.clientId);
-  const myVariations = variations.filter((v) => v.clientId === user?.clientId);
+  useEffect(() => {
+    refreshArts();
+    refreshVariations();
+  }, [refreshArts, refreshVariations]);
+
+  // Filter by client - usando _id do MongoDB se disponível
+  const myArts = arts.filter((art) => {
+    const artClientId =
+      typeof art.clientId === 'string' ? art.clientId : art.clientId;
+    const userClientId = user?.clientId;
+    return (
+      artClientId === userClientId || artClientId === userClientId?.toString()
+    );
+  });
+
+  const myVariations = variations.filter((v) => {
+    const varClientId =
+      typeof v.clientId === 'string' ? v.clientId : v.clientId;
+    const userClientId = user?.clientId;
+    return (
+      varClientId === userClientId || varClientId === userClientId?.toString()
+    );
+  });
   const recentArts = myArts.slice(0, 6);
 
   return (

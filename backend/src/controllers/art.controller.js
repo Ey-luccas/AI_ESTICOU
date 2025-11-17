@@ -237,6 +237,33 @@ export const createArt = async (req, res) => {
       },
     });
 
+    // Envia notificação para o cliente
+    try {
+      const notificationService = (
+        await import('../services/notification.service.js')
+      ).default;
+      const io = req.app.get('io');
+      if (io) {
+        notificationService.setIO(io);
+      }
+
+      // Busca o User do cliente para notificar
+      const User = (await import('../models/User.js')).default;
+      const clientUser = await User.findOne({ clientId: client._id });
+
+      if (clientUser) {
+        const designerName = art.designerId?.userId?.name || 'Designer';
+        await notificationService.notifyNewArt(
+          art,
+          clientUser._id,
+          designerName,
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao enviar notificação:', error);
+      // Não falha a criação da arte se a notificação falhar
+    }
+
     successResponse(res, { art }, 'Arte criada com sucesso', 201);
   } catch (error) {
     errorResponse(res, 'Erro ao criar arte', 500, error.message);

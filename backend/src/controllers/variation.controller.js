@@ -103,6 +103,7 @@ async function generateVariationInBackground(
   art,
   parameters,
   quality,
+  io = null,
 ) {
   try {
     // Constrói prompt otimizado
@@ -112,28 +113,66 @@ async function generateVariationInBackground(
     const result = await openaiService.generateAndUpload(prompt, { quality });
 
     // Atualiza variação com sucesso
-    await Variation.findByIdAndUpdate(variationId, {
-      status: 'completed',
-      imageUrl: result.imageUrl,
-      imagePublicId: result.imagePublicId,
-      thumbnailUrl: result.thumbnailUrl,
-      generatedPrompt: prompt,
-      'metadata.generationTime': result.generationTime,
-      'metadata.revisedPrompt': result.revisedPrompt,
-      'metadata.format': result.metadata.format,
-      dimensions: {
-        width: result.metadata.width,
-        height: result.metadata.height,
+    const variation = await Variation.findByIdAndUpdate(
+      variationId,
+      {
+        status: 'completed',
+        imageUrl: result.imageUrl,
+        imagePublicId: result.imagePublicId,
+        thumbnailUrl: result.thumbnailUrl,
+        generatedPrompt: prompt,
+        'metadata.generationTime': result.generationTime,
+        'metadata.revisedPrompt': result.revisedPrompt,
+        'metadata.format': result.metadata.format,
+        dimensions: {
+          width: result.metadata.width,
+          height: result.metadata.height,
+        },
       },
-    });
+      { new: true },
+    ).populate('clientId', 'name');
+
+    // Notifica cliente que variação está pronta
+    if (variation && variation.clientId) {
+      const notificationService = (
+        await import('../services/notification.service.js')
+      ).default;
+      if (io) {
+        notificationService.setIO(io);
+      }
+      await notificationService.notifyVariationReady(variation, art);
+    }
 
     console.log(`✅ Variação ${variationId} gerada com sucesso`);
   } catch (error) {
     // Atualiza variação com erro
-    await Variation.findByIdAndUpdate(variationId, {
-      status: 'failed',
-      errorMessage: error.message,
-    });
+    const variation = await Variation.findByIdAndUpdate(
+      variationId,
+      {
+        status: 'failed',
+        errorMessage: error.message,
+      },
+      { new: true },
+    ).populate('clientId', 'name');
+
+    // Notifica cliente sobre o erro
+    if (variation && variation.clientId) {
+      try {
+        const notificationService = (
+          await import('../services/notification.service.js')
+        ).default;
+        if (io) {
+          notificationService.setIO(io);
+        }
+        await notificationService.notifyVariationFailed(
+          variation,
+          art,
+          error.message,
+        );
+      } catch (notifError) {
+        console.error('Erro ao notificar sobre falha:', notifError);
+      }
+    }
 
     console.error(`❌ Erro ao gerar variação ${variationId}:`, error);
   }
@@ -186,6 +225,28 @@ export const generateVariation = async (req, res) => {
       generatedPrompt: 'Gerando...',
     });
 
+    // Notifica designer sobre a solicitação
+    try {
+      const notificationService = (
+        await import('../services/notification.service.js')
+      ).default;
+      const io = req.app.get('io');
+      if (io) {
+        notificationService.setIO(io);
+      }
+
+      const client = await Client.findById(clientId);
+      if (client) {
+        await notificationService.notifyVariationRequested(
+          variation,
+          art,
+          client.name,
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao notificar designer:', error);
+    }
+
     // Inicia geração em background (não espera completar)
     generateVariationInBackground(
       variation._id,
@@ -200,6 +261,7 @@ export const generateVariation = async (req, res) => {
         notes,
       },
       quality,
+      req.app.get('io'),
     );
 
     successResponse(

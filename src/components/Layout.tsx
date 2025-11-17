@@ -184,7 +184,12 @@ export default function Layout({ children }: LayoutProps) {
                 <DropdownMenuItem>Perfil</DropdownMenuItem>
                 <DropdownMenuItem>Preferências</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="text-red-600">
+                <DropdownMenuItem
+                  onClick={() => {
+                    logout();
+                  }}
+                  className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                >
                   <LogOut className="w-4 h-4 mr-2" />
                   Sair
                 </DropdownMenuItem>
