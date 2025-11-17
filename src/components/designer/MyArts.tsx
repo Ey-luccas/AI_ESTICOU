@@ -1,30 +1,49 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 import { Badge } from '../ui/badge';
-import { Search, Eye, Copy, Archive } from 'lucide-react';
+import { Search, Eye, Copy, Archive, Loader2 } from 'lucide-react';
 
 export default function MyArts() {
-  const { arts, clients } = useData();
+  const { arts, clients, loadingArts, refreshArts } = useData();
   const { user } = useAuth();
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClient, setFilterClient] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
 
-  // Filter arts by designer
-  const myArts = arts.filter(art => art.designerId === user?.id);
+  useEffect(() => {
+    refreshArts();
+  }, [refreshArts]);
+
+  // Filter arts by designer - usando _id do MongoDB se disponível
+  const myArts = arts.filter((art) => {
+    const artDesignerId =
+      typeof art.designerId === 'string' ? art.designerId : art.designerId;
+    const userId = user?.id;
+    return artDesignerId === userId || artDesignerId === userId?.toString();
+  });
 
   // Apply filters
-  const filteredArts = myArts.filter(art => {
-    const matchesSearch = art.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesClient = filterClient === 'all' || art.clientId === filterClient;
-    const matchesCategory = filterCategory === 'all' || art.category === filterCategory;
+  const filteredArts = myArts.filter((art) => {
+    const matchesSearch = art.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesClient =
+      filterClient === 'all' || art.clientId === filterClient;
+    const matchesCategory =
+      filterCategory === 'all' || art.category === filterCategory;
     return matchesSearch && matchesClient && matchesCategory;
   });
 
@@ -33,7 +52,9 @@ export default function MyArts() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl mb-2">Minhas Artes</h1>
-          <p className="text-gray-600">Gerencie todas as artes criadas por você</p>
+          <p className="text-gray-600">
+            Gerencie todas as artes criadas por você
+          </p>
         </div>
         <Link to="/designer/send-art">
           <Button>+ Nova Arte</Button>
@@ -59,7 +80,7 @@ export default function MyArts() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os clientes</SelectItem>
-                {clients.map(client => (
+                {clients.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
                     {client.name}
                   </SelectItem>
@@ -86,24 +107,38 @@ export default function MyArts() {
       {/* Results count */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-600">
-          {filteredArts.length} {filteredArts.length === 1 ? 'arte encontrada' : 'artes encontradas'}
+          {filteredArts.length}{' '}
+          {filteredArts.length === 1 ? 'arte encontrada' : 'artes encontradas'}
         </p>
       </div>
 
       {/* Arts grid */}
-      {filteredArts.length === 0 ? (
+      {loadingArts ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-600 mb-2" />
+            <p className="text-gray-500">Carregando artes...</p>
+          </CardContent>
+        </Card>
+      ) : filteredArts.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-gray-500">
-            <p>Nenhuma arte encontrada com os filtros selecionados</p>
+            <p>Nenhuma arte encontrada</p>
+            <p className="text-sm mt-2">
+              Crie sua primeira arte clicando em "Nova Arte"
+            </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredArts.map((art) => (
-            <Card key={art.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            <Card
+              key={art.id}
+              className="overflow-hidden hover:shadow-lg transition-shadow"
+            >
               <div className="aspect-video relative overflow-hidden bg-gray-100">
-                <img 
-                  src={art.imageUrl} 
+                <img
+                  src={art.imageUrl}
                   alt={art.name}
                   className="w-full h-full object-cover"
                 />
@@ -114,7 +149,7 @@ export default function MyArts() {
               <CardContent className="pt-4">
                 <h3 className="mb-1 truncate">{art.name}</h3>
                 <p className="text-sm text-gray-600 mb-3">{art.clientName}</p>
-                
+
                 <div className="flex flex-wrap gap-1 mb-3">
                   {art.tags.slice(0, 3).map((tag) => (
                     <Badge key={tag} variant="secondary" className="text-xs">
@@ -130,7 +165,11 @@ export default function MyArts() {
 
                 <div className="flex gap-2">
                   <Link to={`/designer/art/${art.id}`} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2"
+                    >
                       <Eye className="w-4 h-4" />
                       Ver detalhes
                     </Button>

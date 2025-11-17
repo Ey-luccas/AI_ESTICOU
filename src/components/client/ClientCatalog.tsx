@@ -1,29 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 import { Badge } from '../ui/badge';
-import { Search, Sparkles, Eye, Download } from 'lucide-react';
+import { Search, Sparkles, Eye, Download, Loader2 } from 'lucide-react';
 
 export default function ClientCatalog() {
-  const { arts } = useData();
+  const { arts, loadingArts, refreshArts } = useData();
   const { user } = useAuth();
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
 
-  // Filter arts by client
-  const myArts = arts.filter(art => art.clientId === user?.clientId);
+  useEffect(() => {
+    refreshArts();
+  }, [refreshArts]);
+
+  // Filter arts by client - usando _id do MongoDB se disponível
+  const myArts = arts.filter((art) => {
+    const artClientId =
+      typeof art.clientId === 'string' ? art.clientId : art.clientId;
+    const userClientId = user?.clientId;
+    return (
+      artClientId === userClientId || artClientId === userClientId?.toString()
+    );
+  });
 
   // Apply filters
-  const filteredArts = myArts.filter(art => {
-    const matchesSearch = art.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         art.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = filterCategory === 'all' || art.category === filterCategory;
+  const filteredArts = myArts.filter((art) => {
+    const matchesSearch =
+      art.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      art.tags.some((tag) =>
+        tag.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+    const matchesCategory =
+      filterCategory === 'all' || art.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -31,7 +52,9 @@ export default function ClientCatalog() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl mb-2">Catálogo de Artes</h1>
-        <p className="text-gray-600">Sua prateleira digital de modelos prontos</p>
+        <p className="text-gray-600">
+          Sua prateleira digital de modelos prontos
+        </p>
       </div>
 
       {/* Filters */}
@@ -67,24 +90,38 @@ export default function ClientCatalog() {
       {/* Results count */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-600">
-          {filteredArts.length} {filteredArts.length === 1 ? 'arte encontrada' : 'artes encontradas'}
+          {filteredArts.length}{' '}
+          {filteredArts.length === 1 ? 'arte encontrada' : 'artes encontradas'}
         </p>
       </div>
 
       {/* Arts grid */}
-      {filteredArts.length === 0 ? (
+      {loadingArts ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-600 mb-2" />
+            <p className="text-gray-500">Carregando artes...</p>
+          </CardContent>
+        </Card>
+      ) : filteredArts.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-gray-500">
             <p>Nenhuma arte encontrada</p>
+            <p className="text-sm mt-2">
+              Entre em contato com seu designer para adicionar artes
+            </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredArts.map((art) => (
-            <Card key={art.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
+            <Card
+              key={art.id}
+              className="overflow-hidden hover:shadow-lg transition-shadow group"
+            >
               <div className="aspect-video relative overflow-hidden bg-gray-100">
-                <img 
-                  src={art.imageUrl} 
+                <img
+                  src={art.imageUrl}
                   alt={art.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                 />
@@ -94,7 +131,11 @@ export default function ClientCatalog() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                   <div className="absolute bottom-0 left-0 right-0 p-4 flex gap-2">
                     <Link to={`/client/art/${art.id}`} className="flex-1">
-                      <Button variant="secondary" size="sm" className="w-full gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full gap-2"
+                      >
                         <Sparkles className="w-4 h-4" />
                         Criar variação
                       </Button>
@@ -111,7 +152,7 @@ export default function ClientCatalog() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-1 mb-3">
                   {art.tags.slice(0, 3).map((tag) => (
                     <Badge key={tag} variant="secondary" className="text-xs">
@@ -127,7 +168,11 @@ export default function ClientCatalog() {
 
                 <div className="flex gap-2">
                   <Link to={`/client/art/${art.id}`} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2"
+                    >
                       <Eye className="w-4 h-4" />
                       Ver detalhes
                     </Button>
