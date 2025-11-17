@@ -1,7 +1,7 @@
 import { useData } from '../../contexts/DataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { Users, UserCog, FileImage, Sparkles, TrendingUp } from 'lucide-react';
+import { Users, UserCog, Image, Sparkles, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function ManagerDashboard() {
@@ -56,7 +56,7 @@ export default function ManagerDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm">Total de Artes</CardTitle>
-            <Images className="w-4 h-4 text-gray-500" />
+            <Image className="w-4 h-4 text-gray-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl">{arts.length}</div>
