@@ -1,4 +1,4 @@
-# 🚀 LuaLabs Backend - Sistema Completo
+# 🚀 Lua Crescente Backend - Sistema Completo
 
 Sistema de catálogo de artes com geração inteligente via IA.
 

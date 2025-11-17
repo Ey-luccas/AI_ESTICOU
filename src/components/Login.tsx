@@ -30,7 +30,7 @@ export default function Login() {
             <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-500 rounded-xl flex items-center justify-center">
               <Sparkles className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-3xl">LuaLabs</h1>
+            <h1 className="text-3xl">Lua Crescente</h1>
           </div>
           <CardTitle>Entrar no Sistema</CardTitle>
           <CardDescription>Acesse com as credenciais fornecidas pelo administrador</CardDescription>

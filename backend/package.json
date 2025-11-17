@@ -1,7 +1,7 @@
 {
   "name": "lualabs-backend",
   "version": "1.0.0",
-  "description": "Backend do Sistema de Catálogo LuaLabs",
+  "description": "Backend do Sistema de Catálogo Lua Crescente",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
@@ -14,7 +14,7 @@
     "mongodb",
     "jwt"
   ],
-  "author": "LuaLabs",
+  "author": "Lua Crescente",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.13.2",

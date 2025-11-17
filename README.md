@@ -1,4 +1,4 @@
-# 🚀 LuaLabs - Sistema de Catálogo de Artes com IA
+# 🚀 Lua Crescente - Sistema de Catálogo de Artes com IA
 
 Sistema completo de gestão de artes e geração de variações inteligentes via IA.
 
@@ -166,4 +166,4 @@ chmod +x node_modules/.bin/*
 
 ---
 
-**Desenvolvido com ❤️ pela LuaLabs**
+**Desenvolvido com ❤️ pela Lua Crescente**

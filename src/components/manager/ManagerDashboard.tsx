@@ -76,7 +76,7 @@ export default function ManagerDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl mb-2">Dashboard do Gestor</h1>
-        <p className="text-gray-600">Visão geral do sistema LuaLabs</p>
+        <p className="text-gray-600">Visão geral do sistema Lua Crescente</p>
       </div>
 
       {/* Stats cards */}

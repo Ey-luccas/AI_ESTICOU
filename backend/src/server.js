@@ -42,7 +42,7 @@ app.use('/api/variations', variationRoutes);
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    message: 'API LuaLabs rodando!',
+    message: 'API Lua Crescente rodando!',
     timestamp: new Date().toISOString(),
   });
 });
