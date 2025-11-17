@@ -40,6 +40,23 @@ export default function Layout({ children }: LayoutProps) {
 
   if (!user) return null;
 
+  const unreadNotifications = useMemo(
+    () => notifications.filter((notification) => !notification.read).length,
+    [notifications],
+  );
+
+  const markAllNotificationsAsRead = () => {
+    setNotifications((previous) => previous.map((notification) => ({ ...notification, read: true })));
+  };
+
+  const toggleNotificationRead = (id: string) => {
+    setNotifications((previous) =>
+      previous.map((notification) =>
+        notification.id === id ? { ...notification, read: !notification.read } : notification,
+      ),
+    );
+  };
+
   const getMenuItems = () => {
     switch (user.role) {
       case 'designer':
