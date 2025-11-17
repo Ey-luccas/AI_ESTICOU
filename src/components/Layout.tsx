@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -25,6 +25,7 @@ import {
   History,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 
 interface LayoutProps {
   children: ReactNode;
@@ -33,8 +34,49 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const [notifications, setNotifications] = useState([
+    {
+      id: '1',
+      title: 'Nova variação criada',
+      description: 'Fitness Studio Pro gerou 2 novas variações.',
+      time: 'Há 5 min',
+      read: false,
+    },
+    {
+      id: '2',
+      title: 'Cliente ativado',
+      description: 'Restaurante Sabor & Arte está ativo desde hoje.',
+      time: 'Há 1 hora',
+      read: false,
+    },
+    {
+      id: '3',
+      title: 'Designer conectou',
+      description: 'Ana Designer acessou o painel.',
+      time: 'Ontem',
+      read: true,
+    },
+  ]);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   if (!user) return null;
+
+  const unreadNotifications = useMemo(
+    () => notifications.filter((notification) => !notification.read).length,
+    [notifications],
+  );
+
+  const markAllNotificationsAsRead = () => {
+    setNotifications((previous) => previous.map((notification) => ({ ...notification, read: true })));
+  };
+
+  const toggleNotificationRead = (id: string) => {
+    setNotifications((previous) =>
+      previous.map((notification) =>
+        notification.id === id ? { ...notification, read: !notification.read } : notification,
+      ),
+    );
+  };
 
   const getMenuItems = () => {
     switch (user.role) {
@@ -104,10 +146,51 @@ export default function Layout({ children }: LayoutProps) {
 
           <div className="flex items-center gap-4">
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </Button>
+            <Popover open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="w-5 h-5" />
+                  {unreadNotifications > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] px-1 text-[10px] font-semibold h-4 bg-red-500 text-white rounded-full flex items-center justify-center">
+                      {unreadNotifications}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="end">
+                <div className="flex items-center justify-between px-4 py-3 border-b">
+                  <div>
+                    <p className="text-sm font-medium">Notificações</p>
+                    <p className="text-xs text-gray-500">Alertas do sistema</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={markAllNotificationsAsRead} className="h-8 px-2 text-xs">
+                    Marcar todas
+                  </Button>
+                </div>
+                <div className="max-h-64 overflow-y-auto divide-y">
+                  {notifications.map((notification) => (
+                    <button
+                      key={notification.id}
+                      onClick={() => toggleNotificationRead(notification.id)}
+                      className={`w-full text-left px-4 py-3 transition hover:bg-gray-50 ${
+                        notification.read ? 'bg-white' : 'bg-purple-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{notification.title}</p>
+                          <p className="text-xs text-gray-600 truncate">{notification.description}</p>
+                        </div>
+                        <span className="text-[11px] text-gray-500 whitespace-nowrap">{notification.time}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {notifications.length === 0 && (
+                  <div className="px-4 py-6 text-center text-sm text-gray-500">Nenhuma notificação no momento.</div>
+                )}
+              </PopoverContent>
+            </Popover>
 
             {/* Help */}
             <Button variant="ghost" size="icon">
