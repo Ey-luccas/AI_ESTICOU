@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export type UserRole = 'designer' | 'client' | 'manager';
 
@@ -26,17 +27,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Check if user is logged in from localStorage
-    const savedUser = localStorage.getItem('lualabs_user');
-    const savedToken = localStorage.getItem('lualabs_token');
-
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-      setToken(savedToken);
-    }
-  }, []);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const verifySession = async () => {
@@ -53,7 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (result?.success) {
           setUser(result.data.user);
-          localStorage.setItem('lualabs_user', JSON.stringify(result.data.user));
         } else {
           logout();
         }
@@ -85,8 +75,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { user: loggedUser, token: receivedToken } = result.data;
       setUser(loggedUser);
       setToken(receivedToken);
-      localStorage.setItem('lualabs_user', JSON.stringify(loggedUser));
-      localStorage.setItem('lualabs_token', receivedToken);
       return true;
     } catch (error) {
       console.error('Erro ao fazer login', error);
@@ -97,8 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('lualabs_user');
-    localStorage.removeItem('lualabs_token');
+    navigate('/login', { replace: true });
   };
 
   return (
