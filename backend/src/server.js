@@ -7,13 +7,15 @@ import clientRoutes from './routes/client.routes.js';
 import designerRoutes from './routes/designer.routes.js';
 import artRoutes from './routes/art.routes.js';
 import variationRoutes from './routes/variation.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
+import { ensureDefaultAdmin } from './utils/initializeAdmin.js';
 
 // Carrega variáveis de ambiente
 dotenv.config();
 
 // Conecta ao MongoDB
-connectDB();
+connectDB().then(() => ensureDefaultAdmin());
 
 const app = express();
 
@@ -36,12 +38,13 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/designers', designerRoutes);
 app.use('/api/arts', artRoutes);
 app.use('/api/variations', variationRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Rota de teste
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    message: 'API LuaLabs rodando!',
+    message: 'API Lua Crescente rodando!',
     timestamp: new Date().toISOString(),
   });
 });

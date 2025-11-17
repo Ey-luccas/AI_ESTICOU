@@ -1,5 +1,7 @@
 import Client from '../models/Client.js';
 import User from '../models/User.js';
+import Designer from '../models/Designer.js';
+import Notification from '../models/Notification.js';
 import {
   paginate,
   buildSearchQuery,
@@ -73,7 +75,7 @@ export const getClientById = async (req, res) => {
 // @access  Private (Manager)
 export const createClient = async (req, res) => {
   try {
-    const { name, email, phone, address, notes, settings, createUser } =
+    const { name, email, phone, address, notes, settings, createUser, password } =
       req.body;
 
     // Verifica se email já existe
@@ -91,8 +93,10 @@ export const createClient = async (req, res) => {
         return errorResponse(res, 'Já existe um usuário com este email', 400);
       }
 
-      // Gera senha temporária
-      const tempPassword = Math.random().toString(36).slice(-8);
+      const tempPassword =
+        password && password.length >= 6
+          ? password
+          : Math.random().toString(36).slice(-8);
 
       const user = await User.create({
         name,
@@ -121,6 +125,23 @@ export const createClient = async (req, res) => {
     // Atualiza clientId no usuário se foi criado
     if (userId) {
       await User.findByIdAndUpdate(userId, { clientId: client._id });
+    }
+
+    // Notifica todos os designers sobre o novo cliente
+    const designers = await Designer.find().populate('userId', 'name email');
+    const notificationPayloads = designers
+      .filter((designer) => designer.userId)
+      .map((designer) => ({
+        userId: designer.userId._id,
+        title: 'Novo cliente cadastrado',
+        message: `${client.name} acabou de ser adicionado pelo gestor`,
+        type: 'CLIENTE',
+        link: `/clients/${client._id.toString()}`,
+        meta: { clientId: client._id.toString() },
+      }));
+
+    if (notificationPayloads.length > 0) {
+      await Notification.insertMany(notificationPayloads);
     }
 
     successResponse(res, { client }, 'Cliente criado com sucesso', 201);
