@@ -73,7 +73,7 @@ export const getClientById = async (req, res) => {
 // @access  Private (Manager)
 export const createClient = async (req, res) => {
   try {
-    const { name, email, phone, address, notes, settings, createUser } =
+    const { name, email, phone, address, notes, settings, createUser, password } =
       req.body;
 
     // Verifica se email já existe
@@ -91,8 +91,10 @@ export const createClient = async (req, res) => {
         return errorResponse(res, 'Já existe um usuário com este email', 400);
       }
 
-      // Gera senha temporária
-      const tempPassword = Math.random().toString(36).slice(-8);
+      const tempPassword =
+        password && password.length >= 6
+          ? password
+          : Math.random().toString(36).slice(-8);
 
       const user = await User.create({
         name,

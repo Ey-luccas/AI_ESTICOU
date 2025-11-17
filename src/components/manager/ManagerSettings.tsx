@@ -9,7 +9,7 @@ import { Key, Palette, Globe, Zap, Save } from 'lucide-react';
 
 export default function ManagerSettings() {
   const [settings, setSettings] = useState({
-    systemName: 'LuaLabs',
+    systemName: 'Lua Crescente',
     openaiKey: '••••••••••••••••••••••••••••',
     monthlyLimit: '50',
     enableNotifications: true,
@@ -27,7 +27,7 @@ export default function ManagerSettings() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-3xl mb-2">Configurações do Sistema</h1>
-        <p className="text-gray-600">Gerencie as configurações globais do LuaLabs</p>
+        <p className="text-gray-600">Gerencie as configurações globais do Lua Crescente</p>
       </div>
 
       {/* System Settings */}
