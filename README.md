@@ -1,79 +1,169 @@
-# AI ESTICOU - LuaLabs
+# 🚀 LuaLabs - Sistema de Catálogo de Artes com IA
 
-Sistema interno para designers e clientes. Catálogo de artes com geração de variações via IA (OpenAI).
+Sistema completo de gestão de artes e geração de variações inteligentes via IA.
 
-## Stack Tecnológica
+## 📋 Pré-requisitos
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Roteamento**: React Router v6
-- **UI**: Tailwind CSS + shadcn/ui (Radix UI)
-- **Ícones**: Lucide React
-- **Backend** (Planejado): Node.js + MongoDB
+- Node.js 18+ instalado
+- MongoDB rodando (local ou Atlas)
+- (Opcional) Contas Cloudinary e OpenAI para funcionalidades completas
 
-## Perfis de Acesso
+## 🚀 Início Rápido
 
-- **Designer**: Enviar artes e gerenciar criações
-- **Cliente**: Visualizar catálogo e solicitar variações
-- **Gestor**: Gerenciar clientes, designers e configurações
-
-## Como Rodar o Projeto
-
-### Pré-requisitos
-
-- Node.js 18+ e npm
-
-### Instalação
+### 1. Instalar dependências
 
 ```bash
-# Instalar dependências
+# Instalar dependências do front-end
 npm install
 
-# Rodar em modo de desenvolvimento
-npm run dev
-
-# Build para produção
-npm run build
-
-# Preview da build
-npm run preview
+# Instalar dependências do back-end
+cd backend
+npm install
+cd ..
 ```
 
-O projeto estará disponível em `http://localhost:5173`
+### 2. Configurar variáveis de ambiente
 
-## Credenciais de Acesso
+```bash
+# Copiar arquivo de exemplo do back-end
+cp backend/.env.example backend/.env
 
-Para demonstração, use os seguintes acessos rápidos na tela de login:
-
-- **Designer**: `designer@lualabs.com`
-- **Cliente**: `cliente@fitness.com`
-- **Gestor**: `gestor@lualabs.com`
-
-## Estrutura do Projeto
-
-```
-├── src/
-│   ├── components/       # Componentes React
-│   │   ├── client/       # Componentes do cliente
-│   │   ├── designer/     # Componentes do designer
-│   │   ├── manager/      # Componentes do gestor
-│   │   ├── ui/           # Componentes UI reutilizáveis (shadcn/ui)
-│   │   ├── Layout.tsx    # Layout principal
-│   │   └── Login.tsx     # Tela de login
-│   ├── contexts/         # Contextos React (Auth, Data)
-│   ├── App.tsx           # Componente principal
-│   ├── main.tsx          # Ponto de entrada
-│   └── index.css         # Estilos globais
-├── public/               # Arquivos estáticos
-├── package.json
-├── vite.config.ts
-├── tsconfig.json
-└── tailwind.config.js
+# Editar backend/.env com suas configurações:
+# - MONGODB_URI (obrigatório)
+# - JWT_SECRET (obrigatório)
+# - CLOUDINARY_* (opcional - para upload de imagens)
+# - OPENAI_API_KEY (opcional - para geração de variações)
 ```
 
-## Status do Projeto
+### 3. Popular banco de dados (opcional)
 
-MVP em desenvolvimento pela LuaLabs/SoftHouse.
+```bash
+cd backend
+npm run seed
+cd ..
+```
 
-## Licença
+### 4. Rodar projeto completo
 
-Proprietário - LuaLabs/SoftHouse
+```bash
+# Rodar front-end e back-end simultaneamente
+npm run dev:all
+```
+
+Isso iniciará:
+
+- **Front-end**: http://localhost:5173
+- **Back-end**: http://localhost:5000
+
+## 📜 Scripts Disponíveis
+
+### No diretório raiz:
+
+- `npm run dev` - Roda apenas o front-end
+- `npm run dev:frontend` - Roda apenas o front-end
+- `npm run dev:backend` - Roda apenas o back-end
+- `npm run dev:all` - Roda front-end e back-end simultaneamente ⭐
+- `npm run build` - Build de produção do front-end
+
+### No diretório backend:
+
+- `npm run dev` - Roda o servidor em modo desenvolvimento
+- `npm run start` - Roda o servidor em modo produção
+- `npm run seed` - Popula o banco com dados de exemplo
+
+## 🔧 Configuração Mínima
+
+Para rodar o projeto sem OpenAI e Cloudinary, você só precisa:
+
+```env
+# backend/.env
+MONGODB_URI=mongodb://localhost:27017/lualabs
+JWT_SECRET=sua_chave_secreta_aqui
+JWT_EXPIRE=7d
+FRONTEND_URL=http://localhost:5173
+PORT=5000
+NODE_ENV=development
+```
+
+O servidor iniciará normalmente, mas:
+
+- ⚠️ Upload de imagens retornará erro (precisa Cloudinary)
+- ⚠️ Geração de variações retornará erro (precisa OpenAI)
+
+## 📡 Endpoints Principais
+
+### Back-end (http://localhost:5000)
+
+- `GET /api/health` - Status da API
+- `POST /api/auth/login` - Login
+- `GET /api/auth/me` - Dados do usuário
+- `GET /api/clients` - Listar clientes
+- `GET /api/arts` - Listar artes
+- `POST /api/variations/generate` - Gerar variação com IA
+
+### Front-end (http://localhost:5173)
+
+Interface completa do sistema.
+
+## 👥 Credenciais de Demo
+
+Após rodar `npm run seed` no backend:
+
+```
+Designer: designer@lualabs.com / demo123
+Cliente:  cliente@fitness.com / demo123
+Gestor:   gestor@lualabs.com / demo123
+```
+
+## 🛠️ Estrutura do Projeto
+
+```
+AI_ESTICOU/
+├── src/              # Front-end (React + TypeScript)
+├── backend/          # Back-end (Node.js + Express)
+│   ├── src/
+│   │   ├── config/   # Configurações (DB, Cloudinary)
+│   │   ├── controllers/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── services/  # OpenAI, prompts
+│   │   └── middleware/
+│   └── .env          # Variáveis de ambiente
+└── package.json      # Scripts para rodar tudo junto
+```
+
+## 📝 Notas
+
+- O MongoDB precisa estar rodando antes de iniciar o back-end
+- Sem Cloudinary/OpenAI, o sistema funciona parcialmente (autenticação, CRUD básico)
+- Use `npm run dev:all` para desenvolvimento completo
+- Logs aparecem coloridos no terminal (cyan=frontend, yellow=backend)
+
+## 🐛 Troubleshooting
+
+### MongoDB não conecta
+
+```bash
+# Verificar se MongoDB está rodando
+mongosh
+# ou
+mongo
+```
+
+### Porta já em uso
+
+```bash
+# Alterar porta no backend/.env
+PORT=5001
+```
+
+### Erro de permissão
+
+```bash
+# Dar permissão de execução (Linux/Mac)
+chmod +x node_modules/.bin/*
+```
+
+---
+
+**Desenvolvido com ❤️ pela LuaLabs**
