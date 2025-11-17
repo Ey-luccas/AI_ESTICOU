@@ -73,7 +73,6 @@ const clientSchema = new mongoose.Schema(
 );
 
 // Índices para melhor performance
-clientSchema.index({ email: 1 });
 clientSchema.index({ status: 1 });
 clientSchema.index({ createdAt: -1 });
 

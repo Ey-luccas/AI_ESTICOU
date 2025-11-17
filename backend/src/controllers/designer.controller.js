@@ -94,10 +94,34 @@ export const getDesignerByUserId = async (req, res) => {
 // @access  Private (Manager)
 export const createDesigner = async (req, res) => {
   try {
-    const { userId, portfolio, bio, specialties, assignedClients } = req.body;
+    const { userId, user: newUserData, portfolio, bio, specialties, assignedClients } = req.body;
+
+    let designerUserId = userId;
+
+    if (newUserData) {
+      const { name, email, password } = newUserData;
+
+      if (!name || !email || !password) {
+        return errorResponse(res, 'Nome, email e senha são obrigatórios para criar o usuário do designer', 400);
+      }
+
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return errorResponse(res, 'Já existe um usuário com este e-mail', 400);
+      }
+
+      const createdUser = await User.create({
+        name,
+        email,
+        password,
+        role: 'designer',
+      });
+
+      designerUserId = createdUser._id;
+    }
 
     // Verifica se usuário existe e é designer
-    const user = await User.findById(userId);
+    const user = await User.findById(designerUserId);
     if (!user) {
       return errorResponse(res, 'Usuário não encontrado', 404);
     }
@@ -107,14 +131,14 @@ export const createDesigner = async (req, res) => {
     }
 
     // Verifica se já existe perfil de designer para este user
-    const designerExists = await Designer.findOne({ userId });
+    const designerExists = await Designer.findOne({ userId: designerUserId });
     if (designerExists) {
       return errorResponse(res, 'Designer já possui um perfil', 400);
     }
 
     // Cria designer
     const designer = await Designer.create({
-      userId,
+      userId: designerUserId,
       portfolio,
       bio,
       specialties,
