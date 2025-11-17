@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useData, Client as ClientItem } from '../../contexts/DataContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -23,20 +25,12 @@ import {
 import { Label } from '../ui/label';
 import { Search, Plus } from 'lucide-react';
 
-interface Client {
-  _id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  status: string;
-  createdAt: string;
-}
-
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function ManagerClients() {
   const { token } = useAuth();
-  const [clients, setClients] = useState<Client[]>([]);
+  const { clients, refreshClients, addClientFromApi } = useData();
+  const { addNotification } = useNotifications();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -48,26 +42,11 @@ export default function ManagerClients() {
   const [feedback, setFeedback] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchClients = async () => {
-      if (!token) return;
-      try {
-        const response = await fetch(`${API_URL}/clients`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const result = await response.json();
-        if (result?.success) {
-          setClients(result.data.clients || []);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar clientes', error);
-      }
-    };
-
-    fetchClients();
-  }, [token]);
+    refreshClients();
+  }, [refreshClients]);
 
   // Apply search filter
-  const filteredClients = clients.filter((client) =>
+  const filteredClients = clients.filter((client: ClientItem) =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
@@ -96,9 +75,14 @@ export default function ManagerClients() {
       const result = await response.json();
 
       if (response.ok && result?.success) {
-        setClients([result.data.client, ...clients]);
+        addClientFromApi(result.data.client);
         setFormData({ name: '', email: '', phone: '', password: '' });
         setFeedback('Cliente criado e conta ativada com sucesso.');
+        addNotification({
+          title: 'Novo cliente cadastrado',
+          description: `${result.data.client.name} foi criado pelo gestor.`,
+          category: 'client',
+        });
         setIsAddDialogOpen(false);
       } else {
         setFeedback(result?.message || 'Não foi possível criar o cliente.');
@@ -240,7 +224,11 @@ export default function ManagerClients() {
                     <TableCell>-</TableCell>
                     <TableCell>
                       <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
-                        {client.status === 'active' ? 'Ativo' : 'Inativo'}
+                        {client.status === 'active'
+                          ? 'Ativo'
+                          : client.status === 'pending'
+                            ? 'Pendente'
+                            : 'Inativo'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">

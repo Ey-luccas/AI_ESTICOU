@@ -1,5 +1,6 @@
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
@@ -33,30 +34,8 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
+  const { notifications, unreadCount, toggleNotificationRead, markAllAsRead } = useNotifications();
   const location = useLocation();
-  const [notifications, setNotifications] = useState([
-    {
-      id: '1',
-      title: 'Nova variação criada',
-      description: 'Fitness Studio Pro gerou 2 novas variações.',
-      time: 'Há 5 min',
-      read: false,
-    },
-    {
-      id: '2',
-      title: 'Cliente ativado',
-      description: 'Restaurante Sabor & Arte está ativo desde hoje.',
-      time: 'Há 1 hora',
-      read: false,
-    },
-    {
-      id: '3',
-      title: 'Designer conectou',
-      description: 'Ana Designer acessou o painel.',
-      time: 'Ontem',
-      read: true,
-    },
-  ]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   if (!user) return null;
@@ -150,9 +129,9 @@ export default function Layout({ children }: LayoutProps) {
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="w-5 h-5" />
-                  {unreadNotifications > 0 && (
+                  {unreadCount > 0 && (
                     <span className="absolute -top-0.5 -right-0.5 min-w-[18px] px-1 text-[10px] font-semibold h-4 bg-red-500 text-white rounded-full flex items-center justify-center">
-                      {unreadNotifications}
+                      {unreadCount}
                     </span>
                   )}
                 </Button>
@@ -163,7 +142,7 @@ export default function Layout({ children }: LayoutProps) {
                     <p className="text-sm font-medium">Notificações</p>
                     <p className="text-xs text-gray-500">Alertas do sistema</p>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={markAllNotificationsAsRead} className="h-8 px-2 text-xs">
+                  <Button variant="ghost" size="sm" onClick={markAllAsRead} className="h-8 px-2 text-xs">
                     Marcar todas
                   </Button>
                 </div>
@@ -181,7 +160,7 @@ export default function Layout({ children }: LayoutProps) {
                           <p className="text-sm font-medium truncate">{notification.title}</p>
                           <p className="text-xs text-gray-600 truncate">{notification.description}</p>
                         </div>
-                        <span className="text-[11px] text-gray-500 whitespace-nowrap">{notification.time}</span>
+                        <span className="text-[11px] text-gray-500 whitespace-nowrap">{notification.timeLabel}</span>
                       </div>
                     </button>
                   ))}
