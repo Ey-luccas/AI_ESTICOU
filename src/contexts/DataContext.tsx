@@ -1,4 +1,13 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { useAuth } from './AuthContext';
+import { useNotifications } from './NotificationContext';
 
 export interface Art {
   id: string;
@@ -29,10 +38,11 @@ export interface Variation {
 export interface Client {
   id: string;
   name: string;
+  email?: string;
   logo?: string;
   artsCount: number;
   variationsCount: number;
-  status: 'active' | 'inactive';
+  status: 'active' | 'inactive' | 'pending';
   createdAt: Date;
 }
 
@@ -50,6 +60,8 @@ interface DataContextType {
   variations: Variation[];
   clients: Client[];
   designers: Designer[];
+  refreshClients: () => Promise<void>;
+  addClientFromApi: (client: any) => void;
   addArt: (art: Omit<Art, 'id' | 'createdAt'>) => void;
   addVariation: (variation: Omit<Variation, 'id' | 'createdAt'>) => void;
   getArtsByClient: (clientId: string) => Art[];
@@ -59,7 +71,9 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-// Mock data
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Mock data (frontend only)
 const initialArts: Art[] = [
   {
     id: 'a1',
@@ -151,36 +165,6 @@ const initialVariations: Variation[] = [
   }
 ];
 
-const initialClients: Client[] = [
-  {
-    id: 'c1',
-    name: 'Fitness Studio Pro',
-    logo: 'https://i.pravatar.cc/150?img=2',
-    artsCount: 4,
-    variationsCount: 12,
-    status: 'active',
-    createdAt: new Date('2024-01-15')
-  },
-  {
-    id: 'c2',
-    name: 'Restaurante Sabor & Arte',
-    logo: 'https://i.pravatar.cc/150?img=4',
-    artsCount: 1,
-    variationsCount: 5,
-    status: 'active',
-    createdAt: new Date('2024-02-20')
-  },
-  {
-    id: 'c3',
-    name: 'Loja Fashion Trends',
-    logo: 'https://i.pravatar.cc/150?img=5',
-    artsCount: 0,
-    variationsCount: 0,
-    status: 'active',
-    createdAt: new Date('2024-03-10')
-  }
-];
-
 const initialDesigners: Designer[] = [
   {
     id: '1',
@@ -193,10 +177,82 @@ const initialDesigners: Designer[] = [
 ];
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
+  const { token, user } = useAuth();
+  const { addNotification } = useNotifications();
   const [arts, setArts] = useState<Art[]>(initialArts);
   const [variations, setVariations] = useState<Variation[]>(initialVariations);
-  const [clients] = useState<Client[]>(initialClients);
+  const [clients, setClients] = useState<Client[]>([]);
   const [designers] = useState<Designer[]>(initialDesigners);
+
+  const previousClientIdsRef = useRef<Set<string>>(new Set());
+
+  const normalizeClient = (client: any): Client => ({
+    id: client._id || client.id,
+    name: client.name,
+    email: client.email,
+    logo: client.logo,
+    artsCount: client.artsCount || 0,
+    variationsCount: client.variationsCount || 0,
+    status: (client.status || 'active') as Client['status'],
+    createdAt: new Date(client.createdAt || Date.now()),
+  });
+
+  const refreshClients = useCallback(async () => {
+    if (!token || !user || (user.role !== 'manager' && user.role !== 'designer')) {
+      setClients([]);
+      previousClientIdsRef.current = new Set();
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/clients`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result?.success) {
+        const normalizedClients: Client[] = (result.data.clients || []).map(normalizeClient);
+        const existingIds = previousClientIdsRef.current;
+        const newClients = normalizedClients.filter((client) => !existingIds.has(client.id));
+
+        if (newClients.length > 0 && user.role === 'designer') {
+          newClients.forEach((client) =>
+            addNotification({
+              title: 'Novo cliente disponível',
+              description: `${client.name} foi cadastrado pelo gestor.`,
+              category: 'client',
+            }),
+          );
+        }
+
+        previousClientIdsRef.current = new Set(normalizedClients.map((client) => client.id));
+        setClients(normalizedClients);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar clientes', error);
+    }
+  }, [addNotification, token, user]);
+
+  const addClientFromApi = (client: any) => {
+    const normalized = normalizeClient(client);
+    previousClientIdsRef.current.add(normalized.id);
+    setClients((current) => [normalized, ...current.filter((item) => item.id !== normalized.id)]);
+  };
+
+  useEffect(() => {
+    refreshClients();
+  }, [refreshClients]);
+
+  useEffect(() => {
+    if (!user || user.role !== 'designer') return;
+
+    const interval = setInterval(() => {
+      refreshClients();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [refreshClients, user]);
 
   const addArt = (art: Omit<Art, 'id' | 'createdAt'>) => {
     const newArt: Art = {
@@ -234,6 +290,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       variations,
       clients,
       designers,
+      refreshClients,
+      addClientFromApi,
       addArt,
       addVariation,
       getArtsByClient,

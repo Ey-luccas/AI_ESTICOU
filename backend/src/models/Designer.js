@@ -64,7 +64,6 @@ const designerSchema = new mongoose.Schema(
 );
 
 // Índices
-designerSchema.index({ userId: 1 });
 designerSchema.index({ isAvailable: 1 });
 
 // Atualiza lastAccessAt
