@@ -34,8 +34,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
-  const { notifications, unreadCount, toggleNotificationRead, markAllAsRead } =
-    useNotifications();
+  const { notifications, unreadCount, toggleNotificationRead, markAllAsRead } = useNotifications();
   const location = useLocation();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
@@ -109,10 +108,7 @@ export default function Layout({ children }: LayoutProps) {
 
           <div className="flex items-center gap-4">
             {/* Notifications */}
-            <Popover
-              open={isNotificationsOpen}
-              onOpenChange={setIsNotificationsOpen}
-            >
+            <Popover open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="w-5 h-5" />
@@ -129,12 +125,7 @@ export default function Layout({ children }: LayoutProps) {
                     <p className="text-sm font-medium">Notificações</p>
                     <p className="text-xs text-gray-500">Alertas do sistema</p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={markAllAsRead}
-                    className="h-8 px-2 text-xs"
-                  >
+                  <Button variant="ghost" size="sm" onClick={markAllAsRead} className="h-8 px-2 text-xs">
                     Marcar todas
                   </Button>
                 </div>
@@ -149,24 +140,16 @@ export default function Layout({ children }: LayoutProps) {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {notification.title}
-                          </p>
-                          <p className="text-xs text-gray-600 truncate">
-                            {notification.description}
-                          </p>
+                          <p className="text-sm font-medium truncate">{notification.title}</p>
+                          <p className="text-xs text-gray-600 truncate">{notification.description}</p>
                         </div>
-                        <span className="text-[11px] text-gray-500 whitespace-nowrap">
-                          {notification.timeLabel}
-                        </span>
+                        <span className="text-[11px] text-gray-500 whitespace-nowrap">{notification.timeLabel}</span>
                       </div>
                     </button>
                   ))}
                 </div>
                 {notifications.length === 0 && (
-                  <div className="px-4 py-6 text-center text-sm text-gray-500">
-                    Nenhuma notificação no momento.
-                  </div>
+                  <div className="px-4 py-6 text-center text-sm text-gray-500">Nenhuma notificação no momento.</div>
                 )}
               </PopoverContent>
             </Popover>

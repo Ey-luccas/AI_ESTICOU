@@ -29,28 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const logout = React.useCallback(() => {
-    // Limpa estado
-    setUser(null);
-    setToken(null);
-
-    // Limpa localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-
-    // Redireciona para login
-    navigate('/login', { replace: true });
-  }, [navigate]);
-
   useEffect(() => {
     const verifySession = async () => {
-      // Verifica se há token no localStorage na primeira carga
-      const storedToken = localStorage.getItem('token');
-      if (storedToken && !token) {
-        setToken(storedToken);
-        return;
-      }
-
       if (!token) return;
 
       try {
@@ -64,8 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (result?.success) {
           setUser(result.data.user);
-          // Salva token no localStorage
-          localStorage.setItem('token', token);
         } else {
           logout();
         }
@@ -76,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     verifySession();
-  }, [token, logout]);
+  }, [token]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -102,6 +80,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Erro ao fazer login', error);
       return false;
     }
+  };
+
+  const logout = () => {
+    setUser(null);
+    setToken(null);
+    navigate('/login', { replace: true });
   };
 
   return (

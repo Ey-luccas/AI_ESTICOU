@@ -121,9 +121,7 @@ export default function ManagerClients() {
                   id="clientName"
                   placeholder="Ex: Fitness Studio Pro"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
                 />
               </div>
@@ -134,9 +132,7 @@ export default function ManagerClients() {
                   type="email"
                   placeholder="contato@cliente.com"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                 />
               </div>
@@ -146,9 +142,7 @@ export default function ManagerClients() {
                   id="clientPhone"
                   placeholder="(11) 99999-9999"
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -158,9 +152,7 @@ export default function ManagerClients() {
                   type="password"
                   placeholder="Escolha uma senha temporária"
                   value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
                 />
               </div>
@@ -227,31 +219,25 @@ export default function ManagerClients() {
                 </TableRow>
               ) : (
                 filteredClients.map((client) => (
-                  <TableRow key={client.id}>
+                  <TableRow key={client.id || client._id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
                         <div>
                           <p>{client.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {client.email}
-                          </p>
+                          <p className="text-xs text-gray-500">{client.email}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>-</TableCell>
                     <TableCell>-</TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          client.status === 'active' ? 'default' : 'secondary'
-                        }
-                      >
+                      <Badge variant={client.status === 'active' ? 'default' : 'secondary'}>
                         {client.status === 'active'
                           ? 'Ativo'
                           : client.status === 'pending'
-                          ? 'Pendente'
-                          : 'Inativo'}
+                            ? 'Pendente'
+                            : 'Inativo'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-gray-600">

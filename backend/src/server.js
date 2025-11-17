@@ -12,7 +12,6 @@ import variationRoutes from './routes/variation.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import { ensureDefaultAdmin } from './utils/initializeAdmin.js';
-import { setupSocketIO } from './services/socket.service.js';
 
 // Carrega variáveis de ambiente
 dotenv.config();

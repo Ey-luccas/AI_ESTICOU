@@ -1,104 +1,81 @@
 import Notification from '../models/Notification.js';
-import { successResponse, errorResponse, paginate } from '../utils/helpers.js';
+import { errorResponse, successResponse } from '../utils/helpers.js';
 
-// @desc    Listar notificações do usuário
-// @route   GET /api/notifications
-// @access  Private
-export const getNotifications = async (req, res) => {
+export const listNotifications = async (req, res) => {
   try {
-    const { page = 1, limit = 20, read, type, category } = req.query;
+    const { userId, unreadOnly } = req.query;
 
-    let query = { userId: req.user.id };
-
-    if (read !== undefined) {
-      query.read = read === 'true';
+    if (!userId) {
+      return errorResponse(res, 'userId é obrigatório', 400);
     }
 
-    if (type) {
-      query.type = type;
+    const query = { userId };
+    if (unreadOnly) {
+      query.read = false;
     }
 
-    if (category) {
-      query.category = category;
-    }
+    const notifications = await Notification.find(query)
+      .sort({ createdAt: -1 })
+      .lean();
 
-    const notifications = await paginate(
-      Notification.find(query).sort({ createdAt: -1 }),
-      page,
-      limit,
-    );
-
-    const total = await Notification.countDocuments(query);
-
-    successResponse(res, {
-      notifications,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    });
+    return successResponse(res, { notifications });
   } catch (error) {
-    errorResponse(res, 'Erro ao listar notificações', 500, error.message);
+    return errorResponse(res, 'Erro ao buscar notificações', 500, error.message);
   }
 };
 
-// @desc    Obter contador de não lidas
-// @route   GET /api/notifications/unread-count
-// @access  Private
-export const getUnreadCount = async (req, res) => {
+export const createNotification = async (req, res) => {
   try {
-    const count = await Notification.countDocuments({
-      userId: req.user.id,
-      read: false,
+    const { userId, title, message, type, link, meta } = req.body;
+
+    if (!userId || !title || !message) {
+      return errorResponse(res, 'Dados obrigatórios ausentes', 400);
+    }
+
+    const notification = await Notification.create({
+      userId,
+      title,
+      message,
+      type,
+      link,
+      meta,
     });
 
-    successResponse(res, { count });
+    return successResponse(res, { notification }, 'Notificação criada', 201);
   } catch (error) {
-    errorResponse(res, 'Erro ao obter contador', 500, error.message);
+    return errorResponse(res, 'Erro ao criar notificação', 500, error.message);
   }
 };
 
-// @desc    Marcar notificação como lida
-// @route   POST /api/notifications/:id/read
-// @access  Private
-export const markAsRead = async (req, res) => {
+export const markNotificationRead = async (req, res) => {
   try {
-    const notification = await Notification.findById(req.params.id);
+    const { id } = req.params;
 
+    const notification = await Notification.findById(id);
     if (!notification) {
       return errorResponse(res, 'Notificação não encontrada', 404);
     }
 
-    if (notification.userId.toString() !== req.user.id.toString()) {
-      return errorResponse(res, 'Sem permissão', 403);
-    }
+    notification.read = !notification.read;
+    await notification.save();
 
-    await notification.markAsRead();
-
-    successResponse(res, { notification }, 'Notificação marcada como lida');
+    return successResponse(res, { notification }, 'Status atualizado');
   } catch (error) {
-    errorResponse(res, 'Erro ao marcar como lida', 500, error.message);
+    return errorResponse(res, 'Erro ao atualizar notificação', 500, error.message);
   }
 };
 
-// @desc    Marcar todas como lidas
-// @route   POST /api/notifications/read-all
-// @access  Private
-export const markAllAsRead = async (req, res) => {
+export const markAllRead = async (req, res) => {
   try {
-    const result = await Notification.updateMany(
-      { userId: req.user.id, read: false },
-      { read: true, readAt: new Date() },
-    );
+    const { userId } = req.body;
+    if (!userId) {
+      return errorResponse(res, 'userId é obrigatório', 400);
+    }
 
-    successResponse(
-      res,
-      { updated: result.modifiedCount },
-      'Todas as notificações foram marcadas como lidas',
-    );
+    await Notification.updateMany({ userId, read: false }, { read: true });
+
+    return successResponse(res, null, 'Notificações marcadas como lidas');
   } catch (error) {
-    errorResponse(res, 'Erro ao marcar todas como lidas', 500, error.message);
+    return errorResponse(res, 'Erro ao marcar todas como lidas', 500, error.message);
   }
 };
