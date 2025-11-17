@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export type UserRole = 'designer' | 'client' | 'manager';
 
@@ -13,70 +14,94 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => boolean;
+  token: string | null;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demonstration
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Ana Designer',
-    email: 'designer@lualabs.com',
-    role: 'designer',
-    avatar: 'https://i.pravatar.cc/150?img=1',
-  },
-  {
-    id: '2',
-    name: 'Fitness Studio Pro',
-    email: 'cliente@fitness.com',
-    role: 'client',
-    clientId: 'c1',
-    avatar: 'https://i.pravatar.cc/150?img=2',
-  },
-  {
-    id: '3',
-    name: 'Carlos Gestor',
-    email: 'gestor@lualabs.com',
-    role: 'manager',
-    avatar: 'https://i.pravatar.cc/150?img=3',
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is logged in from localStorage
-    const savedUser = localStorage.getItem('lualabs_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
+    // Ensure any legacy persisted sessions are cleared
+    localStorage.removeItem('lualabs_user');
+    localStorage.removeItem('lualabs_token');
   }, []);
 
-  const login = (email: string, _password: string): boolean => {
-    // Simple mock authentication
-    const foundUser = mockUsers.find((u) => u.email === email);
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('lualabs_user', JSON.stringify(foundUser));
+  useEffect(() => {
+    const verifySession = async () => {
+      if (!token) return;
+
+      try {
+        const response = await fetch(`${API_URL}/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = await response.json();
+
+        if (result?.success) {
+          setUser(result.data.user);
+          localStorage.setItem('lualabs_user', JSON.stringify(result.data.user));
+        } else {
+          logout();
+        }
+      } catch (error) {
+        console.error('Erro ao validar sessão', error);
+        logout();
+      }
+    };
+
+    verifySession();
+  }, [token]);
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result?.success) {
+        return false;
+      }
+
+      const { user: loggedUser, token: receivedToken } = result.data;
+      setUser(loggedUser);
+      setToken(receivedToken);
       return true;
+    } catch (error) {
+      console.error('Erro ao fazer login', error);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem('lualabs_user');
+    localStorage.removeItem('lualabs_token');
+    navigate('/login', { replace: true });
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        token,
         login,
         logout,
         isAuthenticated: !!user,
