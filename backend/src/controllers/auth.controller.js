@@ -15,6 +15,13 @@ export const register = async (req, res) => {
   try {
     const { name, email, password, role, clientId } = req.body;
 
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nome, email, senha e função são obrigatórios',
+      });
+    }
+
     // Verifica se usuário já existe
     const userExists = await User.findOne({ email });
     if (userExists) {

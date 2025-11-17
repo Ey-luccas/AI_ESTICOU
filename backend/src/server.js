@@ -8,12 +8,13 @@ import designerRoutes from './routes/designer.routes.js';
 import artRoutes from './routes/art.routes.js';
 import variationRoutes from './routes/variation.routes.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
+import { ensureDefaultAdmin } from './utils/initializeAdmin.js';
 
 // Carrega variáveis de ambiente
 dotenv.config();
 
 // Conecta ao MongoDB
-connectDB();
+connectDB().then(() => ensureDefaultAdmin());
 
 const app = express();
 
